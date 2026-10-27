@@ -22,6 +22,8 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"runtime/debug"
+	"strconv"
 	"strings"
 	"time"
 
@@ -324,10 +326,25 @@ func main() {
 	}
 	soongStartTime := time.Now()
 
+	// Tune Go GC for lower memory consumption during Android.bp analysis to prevent OOM
+	if gc := os.Getenv("GOGC"); gc != "" {
+		if val, err := strconv.Atoi(gc); err == nil {
+			debug.SetGCPercent(val)
+		}
+	} else {
+		debug.SetGCPercent(40)
+	}
+
 	shared.ReexecWithDelveMaybe(delveListen, delvePath)
 	android.InitSandbox(topDir)
 
 	availableEnv := parseAvailableEnv()
+
+	if gc := availableEnv["SOONG_GOGC"]; gc != "" {
+		if val, err := strconv.Atoi(gc); err == nil {
+			debug.SetGCPercent(val)
+		}
+	}
 
 	if availableEnv["SOONG_ENFORCE_NO_REANALYSIS"] == "true" {
 		fmt.Fprintln(os.Stderr, "Reanalysis will run due to build graph or product configuration change.")
