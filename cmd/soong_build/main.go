@@ -22,6 +22,8 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"runtime/debug"
+	"strconv"
 	"strings"
 	"time"
 
@@ -318,6 +320,19 @@ func main() {
 		runtime.MemProfileRate = 0
 	}
 	soongStartTime := time.Now()
+
+	// Tune Go GC and parallel workers if specified in the environment
+	if gc := os.Getenv("GOGC"); gc != "" {
+		if val, err := strconv.Atoi(gc); err == nil {
+			debug.SetGCPercent(val)
+		}
+	}
+
+	if procs := os.Getenv("GOMAXPROCS"); procs != "" {
+		if val, err := strconv.Atoi(procs); err == nil && val > 0 {
+			runtime.GOMAXPROCS(val)
+		}
+	}
 
 	shared.ReexecWithDelveMaybe(delveListen, delvePath)
 	android.InitSandbox(topDir)
