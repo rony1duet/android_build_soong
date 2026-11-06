@@ -326,13 +326,22 @@ func main() {
 	}
 	soongStartTime := time.Now()
 
-	// Tune Go GC for lower memory consumption during Android.bp analysis to prevent OOM
+	// Tune Go GC and parallel workers for lower memory consumption during Android.bp analysis to prevent OOM
 	if gc := os.Getenv("GOGC"); gc != "" {
 		if val, err := strconv.Atoi(gc); err == nil {
 			debug.SetGCPercent(val)
 		}
 	} else {
 		debug.SetGCPercent(40)
+	}
+
+	if procs := os.Getenv("GOMAXPROCS"); procs != "" {
+		if val, err := strconv.Atoi(procs); err == nil && val > 0 {
+			runtime.GOMAXPROCS(val)
+		}
+	} else if runtime.NumCPU() > 16 {
+		// Cap default parallel parser workers to 16 to prevent OOM on high-core servers
+		runtime.GOMAXPROCS(16)
 	}
 
 	shared.ReexecWithDelveMaybe(delveListen, delvePath)

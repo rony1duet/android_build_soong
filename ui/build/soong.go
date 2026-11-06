@@ -216,7 +216,7 @@ func (pb PrimaryBuilderFactory) primaryBuilderInvocation(config Config) bootstra
 	commonArgs = append(commonArgs, "-l", filepath.Join(pb.config.FileListDir(), "Android.bp.list"))
 	invocationEnv := make(map[string]string)
 	// Pass through memory & GC tuning variables to prevent OOM in container builds
-	for _, envVar := range []string{"GOMEMLIMIT", "GOGC", "GODEBUG", "MALLOC_ARENA_MAX"} {
+	for _, envVar := range []string{"GOMEMLIMIT", "GOGC", "GODEBUG", "MALLOC_ARENA_MAX", "GOMAXPROCS"} {
 		if val := os.Getenv(envVar); val != "" {
 			invocationEnv[envVar] = val
 		}
